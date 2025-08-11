@@ -44,7 +44,8 @@ export default function PaymentApp() {
     setInfo(null);
 
     try {
-      const message = `Please pay ₹${amount} to ${recipientName} (UPI ID: ${upiId})\nUPI Link: ${paymentLink}`;
+      // WhatsApp will show the UPI link as clickable on mobile
+      const message = `Please pay ₹${amount} to ${recipientName} (UPI ID: ${upiId})\nClick to pay: ${paymentLink}`;
       const encodedMessage = encodeURIComponent(message);
       window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
       if (!isMobile) {
