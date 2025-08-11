@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import QRCode from 'react-qr-code';
 import { FaWhatsapp, FaQrcode, FaLink, FaRupeeSign, FaSpinner } from 'react-icons/fa';
+import Script from 'next/script';
 
 export default function PaymentApp() {
   const [amount, setAmount] = useState<number>(100);
@@ -14,6 +15,8 @@ export default function PaymentApp() {
   const paymentLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(recipientName)}&am=${amount}&tn=Payment`;
   const isMobile = typeof window !== 'undefined' &&
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+  const razorpayKey = "rzp_test_B4OLtt7MRHNxrW";
 
   const initiateUPIPayment = () => {
     setIsLoading(true);
@@ -58,8 +61,42 @@ export default function PaymentApp() {
     }
   };
 
+  const openRazorpay = () => {
+    setIsLoading(true);
+    setError(null);
+    setInfo(null);
+
+    const options = {
+      key: razorpayKey,
+      amount: amount * 100, // Amount in paise
+      currency: "INR",
+      name: "Payment Receiver",
+      description: "UPI Payment",
+      image: "", // Optional: add your logo url
+      handler: function (response: any) {
+        setInfo("Payment successful! Payment ID: " + response.razorpay_payment_id);
+      },
+      prefill: {
+        name: "",
+        email: "",
+        contact: ""
+      },
+      theme: {
+        color: "#2563eb"
+      }
+    };
+
+    // @ts-ignore
+    const rzp = new window.Razorpay(options);
+    rzp.open();
+    setTimeout(() => setIsLoading(false), 1000);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-gray-100 to-blue-100 flex flex-col">
+      {/* Razorpay script */}
+      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="beforeInteractive" />
+
       <header className="bg-white border-b border-blue-100 p-8 shadow-sm">
         <h1 className="text-3xl font-bold text-center text-blue-700">UPI Payment Gateway</h1>
         <p className="text-center mt-2 text-gray-500 text-base">Simple, Secure & Fast Payments</p>
@@ -106,7 +143,7 @@ export default function PaymentApp() {
               onClick={() => { setActiveTab('whatsapp'); setInfo(null); setError(null); }}
               className={`flex-1 py-4 font-medium flex items-center justify-center gap-2 transition ${activeTab === 'whatsapp' ? 'text-blue-700 border-b-2 border-blue-500 bg-white' : 'text-gray-500'}`}
             >
-              <FaWhatsapp /> WhatsApp
+              <FaLink /> Razorpay
             </button>
           </div>
 
@@ -161,15 +198,15 @@ export default function PaymentApp() {
             {activeTab === 'whatsapp' && (
               <div className="text-center">
                 <button
-                  onClick={sendWhatsAppRequest}
+                  onClick={openRazorpay}
                   disabled={isLoading}
-                  className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg shadow transition w-full flex items-center justify-center gap-2 text-base"
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow transition w-full flex items-center justify-center gap-2 text-base"
                 >
                   {isLoading ? <FaSpinner className="animate-spin" /> : null}
-                  <FaWhatsapp /> Request ₹{amount} via WhatsApp
+                  Pay ₹{amount} with Razorpay
                 </button>
                 <p className="mt-4 text-gray-600 text-sm">
-                  Send payment request directly to WhatsApp
+                  Pay securely using Razorpay UPI, cards, wallets, and more.
                 </p>
               </div>
             )}
